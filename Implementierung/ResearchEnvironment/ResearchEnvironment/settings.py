@@ -130,4 +130,50 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'resources')
 MEDIA_URL ='/resources/'
 LOGIN_URL = '/authentification/login'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' 
-
+#EMAIL_HOST = 'smtp.gmail.com'
+#EMAIL_HOST_USER = 'pseautmanagement@gmail.com'
+#EMAIL_HOST_PASSWORD = 'pse1aut2management3'
+#EMAIL_PORT = 587
+#EMAIL_USE_TLS = True
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt' : "%d/%b/%Y %H:%M:%S"
+        },
+    },
+    'handlers': {
+        
+        'logfile': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename':  "logs/logfile",
+            'maxBytes': 50000,
+            'backupCount': 2,
+            'formatter': 'standard',
+        },
+        'console':{
+            'level':'INFO',
+            'class':'logging.StreamHandler',
+            'formatter': 'standard'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'WARN',
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'AuthorizationManagement': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+    }
+}

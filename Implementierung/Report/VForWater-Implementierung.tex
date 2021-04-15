@@ -1,0 +1,307 @@
+\documentclass[parskip=full,11pt]{scrartcl}
+%\usepackage{pdfpages}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\usepackage[T1]{fontenc}
+\usepackage[german]{babel}
+\usepackage[yyyymmdd]{datetime} 
+\usepackage{hyperref}
+\usepackage[toc, nonumberlist, automake]{} %added automake option
+\usepackage{csquotes}
+\usepackage{graphicx}
+\hypersetup{
+ 		pdftitle={VForWater-Implementierung},
+ }
+\usepackage{fancyhdr}%<-------------to control headers and footers
+\usepackage[a4paper,margin=1in,footskip=.25in]{geometry}
+\fancyhf{}
+\fancyfoot[C]{\thepage} %<----to get page number below text
+\pagestyle{fancy} %<-------the page style itself
+ 
+\title{Implementierung}
+\subtitle{Autorisierungsmanagement für eine virtuelle Forschungsumgebung für Geodaten}
+\author{Alex\\Anastasia\\Atanas\\Dannie\\ Houra\\Sonya\\}
+\date{11.01.18}
+ % define custom lists
+\usepackage{enumitem}
+
+
+\usepackage{linegoal,listings}
+\newsavebox{\mylisting}
+\makeatletter
+\newcommand{\lstInline}[2][,]{%
+	\begingroup%
+	\lstset{#1}% Set any keys locally
+	\begin{lrbox}{\mylisting}\lstinline!#2!\end{lrbox}% Store listing in \mylisting
+	\setlength{\@tempdima}{\linegoal}% Space left on line.
+	\ifdim\wd\mylisting>\@tempdima\hfill\\\fi% Insert line break
+	\lstinline!#2!% Reset listing
+	\endgroup%
+}
+\makeatother
+\setlength{\parindent}{0pt}% Just for this example
+
+\lstset{basicstyle=\footnotesize\ttfamily,breaklines=true}
+\lstset{framextopmargin=50pt,frame=bottomline,showstringspaces=false,upquote=true}
+
+
+ 
+\begin{document}
+ 
+ \begin{titlepage}
+ 	
+ 	\begin{center}
+ 	\includegraphics[width=0.5\linewidth]{res/KITLogo.png}\\
+ 	\vspace{2cm}
+ 	{\scshape\LARGE\bfseries Implementierung \par}
+ 	\vspace{0.5cm}
+ 	{\scshape\Large Praxis der Softwareentwicklung\\}
+ 	\vspace{1cm}
+ 	{\scshape\Large Wintersemester 17/18\\}
+ 	\vspace{2cm}
+ 	{\huge\bfseries Autorisierungsmanagement für eine virtuelle Forschungsumgebung für Geodaten\par}
+ 	\vspace{2cm}
+ 	\vfill
+ 	{\bfseries {\Large Autoren}:\par}
+ 	{\Large Bachvarov, Aleksandar }\\
+ 	{\Large Dimitrov, Atanas }\\
+ 	{\Large Mortazavi Moshkenan, Houraalsadat }\\
+ 	{\Large Sakly, Khalil }\\
+ 	{\Large Slobodyanik, Anastasia }\\
+ 	{\Large Voneva, Sonya}\\
+ 	\vfill
+ 	{\large 07.02.18 \par}
+ 	\end{center}
+ \end{titlepage}
+ 
+ \tableofcontents
+ \newpage
+ \section{Einleitung}
+Dieses Dokument beschreibt die Änderungen, welche an unserem Entwurfsdokument vorgenommen wurden, um die Funktionalität des Projekts 	\glqq Autorisierungsmanagement für eine virtuelle Forschungsumgebung für Geodaten\grqq{} zu gewährleisten. Das Ziel dieses Dokuments ist, die Gründe für diese Änderungen zu erläutern, beziehungsweise Probleme aufzuzeigen, die sich während der Implementierung ergeben haben.\\\\
+Es werden Änderungen an der Datenhaltung und der Applikationslogik beschrieben sowie begründet. Des Weiteren wird ein Überblick darüber vermittelt, welche Kriterien aus dem Pflichtenheft im Ergebnisprodukt erfüllt wurden.\\\\
+Am Schluss des Dokuments befindet sich ein Vergleich zwischen unserem ursprünglichen und tatsächlichen Implementierungsplan sowie Erläuterungen eventueller Verzögerungen im Zeitplan.
+
+ \newpage
+ \section{Änderungen am Entwurf}
+ 
+ \subsection{Model}
+Während der Designphase wurden Klassen des Model-Pakets entsprechend der Prinzipien objektorientierter Programmierung entworfen. Während der Einarbeitung in das Django-Framework hat sich allerdings herausgestellt, dass Model-Klassen eher als Datenstruktur-Träger benutzt werden und keine Anwendungslogik in sich kapseln. Daher wurde sämtliche Funktionalität in dem View-Paket implementiert, sodass Model-Klassen ausschließlich die Datenbankstruktur definieren.
+ 
+\begin{itemize}
+\item \textbf{Klasse CustomUser}\\
+Klasse \textit{CustomUser} erbt von der Django-Klasse \textit{User} und ersetzt Klasse \textit{User} aus dem Entwurfsdokument. Sämtliche Attribute werden von Django vordefiniert und mussten nicht zusätzlich implementiert werden.
+
+\item \textbf{Klasse Admin}\\
+Da diese Klasse keine Funktionalität in sich kapselt, hat sich herausgestellt, dass sie durch die Benutzung des Attributs \textit{is staff} ersetzt werden kann. Dieses Attribut wird in der \textit{User}-Klasse von Django vordefiniert.
+ 
+\item\textbf{Klasse Resource}\\
+Um Lese- und Besitzerrechte zu implementieren, werden der Klasse zusätzliche Attribute hinzugefügt: die Listen \textit{Readers} und \textit{Owners}.
+
+\item \textbf{Klasse ResourceType}\\
+Im Implementierungsprozess hat sich herausgestellt, dass diese Klasse keine Auswirkung auf die Funktionalität des Produkts hat, weswegen diese Klasse nicht implementiert wurde, um unnötige Aufwandserhöhung zu vermeiden.
+
+\item \textbf{Klasse Request}\\
+Dieser Klasse wurde das \textit{Description}-Attribut hinzugefügt. Dieses Attribut hat Typ \textit{String} und dient dazu, die Begründung zu speichern, welche vom Absender bei der Erstellung des Requests eventuell eingegeben wurde.
+
+\item \textbf{Klassen Logging und EmailMessages}\\
+Diese von Django vordefinierten Klassen mussten nicht extra implementiert werden. 
+\end{itemize}
+
+\newpage
+\subsection{View} 
+ 
+\begin{itemize}
+\item \textbf{Klasse ChosenRequestsView}\\
+Funktionalität dieser Klasse wurde auf vier Views verteilt:
+\begin{itemize}
+\item \textit{ApproveAccessRequest}
+\item \textit{DenyAccessRequest}
+\item \textit{ApproveDeletionRequest}
+\item \textit{DenyDeletionRequest}
+\end{itemize}
+Diese Unterteilung hat bessere Trennung der Anwendungslogik für Bearbeitung unterschiedlicher Requests zur Folge. 
+
+\item \textbf{Klasse DeleteResourceView}\\
+Dieser View erweitert Funktionalität von Klassen \textit{ManageResourcesView} und \textit{ResourcesOverview} und wird zum Löschen der Ressourcen von Administratoren des Portals benutzt. Absenden eines Löschrequests wird stattdessen im \textit{SendDeletionRequestView} implementiert. 
+
+\item \textbf{Klassen PermissionForChosenResourceView,  PermissionsForResourceView und PermissionsForUsersView}\\
+Diese Views wurden durch \textit{PermissionEditingView} ersetzt und für bessere Übersichtlichkeit durch  \textit{PermissionEditingViewSearch} erweitert. Bearbeitung der Rechte aller Ressourcen in einem View hat bessere Benutzbarkeit des Portals zur Folge.
+
+\item \textbf{Klassen ManageUsersView und ManageResourcesView}\\
+Diese Views wurden durch vordefinierte Django-Funktionalität ersetzt.
+
+\item \textbf{Klasse ResourcesOverview}\\
+Dieser View wurde durch einen zusätzlichen View \textit{ResourcesOverviewSearch} für bessere Benutzbarkeit des Portals erweitert.
+
+\item \textbf{Klasse RequestView}\\
+Funktionalität dieses Views wurde für bessere Struktur der Anwendungslogik auf vier Views verteilt:
+\begin{itemize}
+\item \textit{SendAccessRequest}
+\item \textit{CancelAccessRequest}
+\item \textit{SendDeletionRequest}
+\item \textit{CancelDeletionRequest}
+\end{itemize}
+
+\item \textbf{Klasse ResourceInfoView}\\
+Funktionalität dieses Views wurde durch einen Modaldialog implementiert, um überflüssige Codezeilen zu sparen.
+\newpage
+\item \textbf{Zusätzlich implementierte Views}\\
+Während der Implementierung hat sich herausgestellt, dass einige Funktionalitäten des Portals zusätzliche View-Klassen benötigen. Die noch nicht erwähnten Views heißen:
+\begin{itemize}
+\item \textit{AddNewResourceView} dient zur Erstellung einer neuen Ressource;
+\item \textit{EditNameView} wird zum Ändern des Benutzernamens benutzt.
+\end{itemize} 
+\end{itemize}
+
+\subsection{URL-Verzeichnis}
+Änderungen an Views haben dementsprechende Änderungen am URL-Verzeichnis verursacht. Eine URL lokalisiert einen View, der entweder als ein Main-Fenster oder dessen Teil präsentiert wird.  \\
+\renewcommand{\labelitemi}{$\bullet$}
+\renewcommand{\labelitemii}{}
+\renewcommand{\labelitemiii}{}
+\renewcommand{\labelitemiv}{}  
+
+\indent Home-Seite mit Authentifizierungsfunktionalität für Testzwecke:
+\begin{itemize}[itemsep=0pt]
+\item \textbf{Startseite}
+	\begin{itemize}[itemsep=0pt]
+	\item \textbf{/authentification/register}
+	\item \textbf{/authentification/login}
+	\item \textbf{/authentification/logout}\\
+	\end{itemize}
+
+\noindent Verwaltungsseiten:
+\item \textbf{/resource-manager}
+\item \textbf{/user-manager}\\
+
+\noindent Benutzerseite:
+\item \textbf{/profile}
+	\begin{itemize}[itemsep=0pt]
+	\item \textbf{/my-resources}
+		\begin{itemize}
+		\item \textbf{/resourceid-edit-users-permissions}
+			\begin{itemize}
+			\item \textbf{/search}
+			\end{itemize}
+		\item \textbf{/add-new-resource}		
+		\end{itemize}
+	\item \textbf{/edit-name}\\
+	\end{itemize}
+\newpage
+\noindent Bearbeitung der Requests:
+\item \textbf{/approve-access-request/requestid}
+\item \textbf{/deny-access-request/requestid}
+\item \textbf{/approve-deletion-request/requestid}
+\item \textbf{/deny-deletion-request/requestid}\\
+
+\noindent Absenden und Löschen der Requests:
+\item \textbf{/send-access-request/resourceid}
+\item \textbf{/cancel-access-request/resourceid}
+\item \textbf{/send-deletion-request/resourceid}
+\item \textbf{/cancel-deletion-request/resourceid}\\
+
+\noindent Ressourcenübersicht:
+\item \textbf{/resources-overview}
+	\begin{itemize}
+	\item \textbf{/search}\\
+	\end{itemize}
+	
+\noindent Metadaten einer Ressource
+\item \textbf{/resources/resourceid}\\
+
+\noindent Löschen der Ressourcen für Administratoren:
+\item \textbf{/delete-resource/resourceid}
+\end{itemize}
+ 
+\newpage 
+\subsection{Datenbank}
+Jede Änderung am Model-Paket beeinflusst die Datenbankstruktur. Der von Django unabhängige Teil der Datenbank, die für die Datenhaltung in unserem Projekt benutzt wird, wird auf der \autoref{datenbank} dargestellt. Die im Entwurf geplante Tabelle \textit{Permission} wurde durch \textit{many-to-many} Beziehungen zwischen Benutzern und Ressourcen ersetzt und in zwei Tabellen \textit{Resource Owners} und \textit{Resource Readers} gespeichert. Diese Änderung sorgt für bessere Antwortzeiten der Datenbank, was der besseren Benutzbarkeit dient.
+Unterschiedliche Arten von Requests werden in eigenen Tabellen gespeichert. Das ermöglicht bessere Trennung zwischen Benutzer- und Admin-Funktionalitäten. Bearbeitete Requests werden nicht weiter gespeichert und sind ausschließlich in der Logdatei aufgeführt.    
+ \begin{figure}[ht!]
+ 	\centering
+ 	\includegraphics[width=1\textwidth]{res/database.png}
+ 	\caption{Schema der Datenbank. Jedes Rechteck repräsentiert eine Tabelle,
+jedes Attribut - eine Spalte in der entsprechenden Tabelle in der Datenbank. Die
+Pfeile geben Auskunft, welches Attribut in welcher Tabelle als Schlüssel vorkommt.}
+\label{datenbank}
+ \end{figure}
+
+\newpage
+\section{Implementierte Kriterien}
+\subsection{Musskriterien}
+Während der Planungsphase wurde eine Anforderungsdefinition im Pflichtenheft festgelegt. Diese Anforderungen beschreiben, welche Muss-, Wunsch- und Abgrenzungskriterien das zu entwickelnde Produkt erfüllen muss. In der Implementierungsphase unseres Projektes wurden alle Musskriterien erfolgreich implementiert, was für präzise und eindeutige Aufgabenformulierung spricht und zeigt, dass das Wasserfallmodel an der Softwareentwicklung ergebnisreich angewendet werden kann.   
+
+\subsection{Wunschkriterien}
+Bei der Implementierung funktionaler Anforderungen hat sich ergeben, dass die Realisierung einiger Wunschkriterien die Benutzbarkeit des Produkts deutlich verbessern würde. Als Folge wurden unten genannte Kriterien zusätzlich implementiert:
+\begin{itemize}
+\item Wird eine Ressource gelöscht, so werden alle Besitzer per E-Mail benachrichtigt.
+\item Ein Benutzer kann durch Administratoren blockiert werden.
+\item Der Administrator kann Benutzer anhand von Vorname und/oder Nachname suchen.
+\end{itemize}
+
+
+\newpage
+\section*{Unittests}
+\subsection*{Setup}
+Setup-Funktionen erschaffen die Testumgebung, beziehungsweise Testressource, für alle Testcases:
+\begin{itemize}
+\item setUpUsers
+\item setUpResourceAndRequests
+\end{itemize}
+\subsection*{Testcases}
+Um Codequalität zu gewährleisten, wurden zu jedem View entsprechende Testcases implementiert. Ein Testcase ist eine Testeinheit, die das angemessene Verhalten eines bestimmten Teils der Funktionalität unter unterschiedlichen Bedingungen überprüft. Die in unserem Projekt implementierten Testcases:  
+\begin{itemize}
+\item TestHomeView
+\item TestResourceManager
+\item TestUserManager
+\item TestProfileView
+\item TestMyResourcesView
+\item TestSendDeletionRequest
+\item TestCancelDeletionRequest
+\item TestApproveAccesRequest
+\item TestDenyAccesRequest
+\item TestSendAccessRequest
+\item TestCancelAccessRequest
+\item TestDeleteResourceView
+\item TestSendDeletionRequest
+\item TestEditNameView
+\item TestResourcesOverview
+\item TestResourcesOverviewSearch
+\item TestPermissionEditingView
+\item TestPermissionEditingViewSearch
+
+\end{itemize}
+\subsection*{Cleanup}
+Cleanup-Funktionen bringen das System in den ursprünglichen Zustand, um Konsistenz der Datenbank vor und nach dem Testen zu garantieren:  
+\begin{itemize}
+\item deleteUsers
+\item deleteResourcesAndRequests
+\end{itemize}
+
+\newpage
+\section{Implementierungsplan}
+Zu Beginn der Implementierung wurde ein Gannt-Zeitplan erstellt (\autoref{ganntold}), in dem wir unsere ursprüngliche  Aufwandsschätzung dargestellt haben. In dem realen Ablauf der Phase kam es zu einigen Abweichungen von diesem Zeitplan.\\\\
+Ein Grund dafür ist, dass einige Aktivitäten stark zusammenhängen und Änderungen am Entwurf Anpassungen an schon implementierten Teilen erfordern. Als Folge werden bereits abgeschlossene Aktivitäten fortgesetzt, weswegen die geplante Dauer sich mehrfach erhöhen kann. Strikte Zeitplanung jeder Aktivität gemäß des Wasserfallmodel erfordert Erfahrung mit benutzten Tools, in unserem Fall mit Framework Django.\\\\ 
+Realer Zeitablauf (\autoref{ganntnew}) zeigt Verzögerungen bei geplanten Aktivitäten und das Maß der Auswirkung jeder Verzögerung auf gesamten Zeitverlauf. Trotz aller Verzögerungen wurde die Implementierung des Projekts nahezu fristgerecht abgeschlossen.\\
+
+
+ \begin{figure}[ht!]
+ 	\centering
+ 	\includegraphics[width=1\textwidth]{res/gannt_plan.png}
+ 	\caption{Ursprünglicher Implementierungsplan. Jede Aktivität wird in jeweiliger Zeile mit einem waagerechten Balken visualisiert. Je länger der Balken, desto länger dauert die Aktivität. Die Beziehungen (beziehungsweise Abhängigkeiten) zwischen Aktivitäten werden mit Pfeilen dargestellt.}
+ 	\label{ganntold}
+ \end{figure}
+ 
+ \newpage
+  \begin{figure}[h]
+ 	\centering
+ 	\includegraphics[width=1\textwidth]{res/gannt_real.png}
+ 	\caption{Realer Zeitablauf der Implementierung mit geänderter Dauer der Aktivitäten. Abhängig von Folgen der Verzögerungen werden Aktivitäten farblich markiert: grün - rechtzeitig/keine negative Folgen, gelb - von anderen Aktivitäten verursachte Verzögerungen, rot - Aktivitäten, während deren Entwurfsprobleme gelöst werden mussten.}
+ 	\label{ganntnew}
+ \end{figure}
+ 
+ 
+\section{Zusammenfassung}
+In der Implementierungsphase wurde ein funktionsfähiges Produkt gemäß des Entwurfs und des Pflichtenhefts fertiggestellt. Das Produkt wurde auf einer virtuellen Maschine für Testzwecke installiert und das Verhalten der Quellcode wurde mit Unittests überprüft. Der Quellcode umfasst ca. 8000  Codezeilen und ist in unserem \href{https://github.com/anastasiaslobodyanik/PSE/}{GitHub-Depot} verfügbar.\\\\
+\textbf{Link zum Depot:} \href{https://github.com/anastasiaslobodyanik/PSE/}{https://github.com/anastasiaslobodyanik/PSE/}.
+\end{document}
+\grid

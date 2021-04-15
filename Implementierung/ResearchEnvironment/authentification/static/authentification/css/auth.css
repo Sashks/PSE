@@ -1,0 +1,99 @@
+/*style sheet for the authentification functionality - login and registration)*/
+
+* {
+	margin:0;
+	padding-left: 5px;
+    line-height: 30px;		/*																 */
+    border-radius: 4px;		/* These 3 lines are for Login page Username and passwrod styles */
+    margin-bottom: 5px;		  
+	border:none;
+}
+
+body {
+	background-color: #dddfd4; /* grey */
+	height: 75vh;
+	text-decoration: none;
+	background-size: cover;
+	background-position: center;
+	text-align: center;	
+	margin-top: 100px;
+	font-family: "Roboto", sans-serif;
+
+}
+	
+.container {
+	color: #3fb0ac; /* light-blue */
+	padding: 5px 20px;
+	font-size: 30px;	
+	margin-top: 20px;
+}
+
+.logo img {
+	width: 150px;
+	height: 150px;
+}
+
+.form-signin {
+	font-size: 20px;
+	color: #173e43; /* dark-blue */
+	text-transform: lowercase;	
+	display: inline-block;
+    width: 400px;
+    text-align: right;
+	margin-top: 20px;
+	
+}
+.signin-fields {
+	border:none;
+	width: 290px;
+	line-height: 30px;
+	border-radius: 4px;
+	padding-left: 40px;
+	margin-bottom: 5px;
+}
+.signin-btn {
+    background-color: #173e43; /* dark-blue */
+    border: none;
+	height: 39px;
+	width: 90px;
+	font-size: 16px;
+    color: white;
+    text-align: center;
+	margin-right: 160px;	
+	border-radius: 4px;
+	margin-top:10px
+}
+
+.signin-btn:hover {
+	color: #fae596;
+	cursor: pointer;
+}
+
+.signup-btn {
+	color: #173e43;
+    text-decoration: none;
+    padding: 10px 20px;
+    display: block;
+	margin-right: 9px;	
+	margin-top: -20px;
+}
+
+.signup-btn:hover{
+	color: #3fb0ac;
+	cursor: pointer;
+}
+
+.reg {
+	margin-top: 30px;
+	color: #173e43;
+}
+
+.reg-fields {
+	border:none;
+	width: 285px;
+	line-height: 30px;
+	border-radius: 4px;
+	padding-left: 10px;
+	margin-bottom: 5px;
+}
+

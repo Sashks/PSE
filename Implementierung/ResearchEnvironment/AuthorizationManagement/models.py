@@ -1,111 +1,54 @@
 from django.db import models
 from django.contrib.auth.models import User
-from datetime import datetime 
-from django.core.exceptions import ObjectDoesNotExist
+from datetime import datetime
 from django.core.mail.message import EmailMessage
 import logging
 from django.template.loader import render_to_string
-from django.core.mail import send_mail
+from django.core.validators import MaxLengthValidator
 
-# Create your models here.
-logger = logging.getLogger(__name__)
+
+
 class CustomUser(User):
     
     class Meta:
+        #uses proxy model to extend behavior of  Django built-in user (does not generate an extra table in the database)
         proxy = True
-#    
-    def addResource(self):
-        new_resource = Resource.objects.create()
-
-        logger.info(self.username + 'created a new resource')
-        self = Owner()
-        new_resource.readers.add(self)
-        new_resource.owners.add(self)
-         
-        
-    def sendAccessRequest(self, Resource):
-        acc_req = AccessRequest.objects.create(sender = self,resource = Resource)
-
-        text_content = render_to_string('AuthorizationManagement/access-resource-mail.txt', {'user' : self,'resource' : Resource})
-        email_to = [x[0] for x in Resource.owners.values_list('email')]
-        email_from=self.email
-        send_mail('AccessPermission', text_content, email_from,email_to  )
-        return  acc_req
-    def cancelRequest(self, Request):
-        Request.delete()  
-
+   
 class Owner(CustomUser):
     
     class Meta:
         proxy = True
-    def giveAccessPermission(self, Resource, CustomUser):
-        Resource.readers.add(CustomUser)
-    def allowAccessPermission(self, Request):
-        pass
-    def deleteAccessPermission(self, Resource, CustomUser):
-        Resource.readers.remove(CustomUser)
-    def denyAccessPermission(self,Request):
-        pass
-    def allowOwnerPermission(self,Resource,CustomUser):
-
-        CustomUser.__class__=Owner
-        CustomUser.save()
-        owner = CustomUser
-        Resource.readers.add(owner)
-        Resource.owners.add(owner)
-
-    def sendDeletionRequest(self,Resource):
-        dlt_req = DeletionRequest.objects.create(sender = self,resource = Resource)
-        body = ''
-        email_to = Resource.owners.all().email
-        email = EmailMessage('Hello', body, self.email, email_to )
-        email.send()
-    
-class Admin(Owner):
-    
-    class Meta:
-        proxy = True
-    
-    def acceptDeletionRequest(self,Request):
-        pass
-    def denyDeletionRequest(self,Request):
-        pass
-
+        
+# corresponds to the table in the database storing all information about a resource
 class Resource(models.Model):
-    type = models.CharField(max_length=50, default = 'default_type')
-    name = models.CharField(max_length=150, default = 'default_name')
-    description = models.CharField(max_length=250, default = 'default_description')
+    type = models.CharField(max_length=50)
+    name = models.CharField(max_length=150)
+    description = models.TextField(max_length=250, blank=True,
+                                   validators=[MaxLengthValidator(250)])
     creationDate = models.DateTimeField(default=datetime.now, blank=True)
     readers = models.ManyToManyField(CustomUser, related_name= 'reader')
     owners = models.ManyToManyField(Owner, related_name= 'owner')
-    link = models.FileField(null=True)
-    
-    def hasAccessPermission(self,CustomUser):
-        self.readers.filter(id = CustomUser.id).exists()
-    def hasOwnerPermission(self,CustomUser):
-        self.owners.filter(id = CustomUser.id).exists()
+    link = models.FileField(upload_to='')
+
     
 class Request(models.Model):
-    sender = models.ForeignKey(CustomUser, on_delete = models.DO_NOTHING)
+    sender = models.ForeignKey(CustomUser, on_delete = models.CASCADE)
     creationDate = models.DateTimeField(default=datetime.now, blank=True)
-    resource = models.ForeignKey(Resource, on_delete = models.DO_NOTHING)
-    description = models.CharField(max_length=250, default = 'default_description')
+    resource = models.ForeignKey(Resource, on_delete = models.CASCADE)
+    description = models.CharField(max_length=250, blank=True)
+    type=""
     
     class Meta:
-        abstract = True
+        # the Request model must be an abstract class, to put some common information into the AccessRequest and DeletionRequest  model
+        #This model will not be used to create any database table
+        abstract = True        
+        unique_together=('sender','resource',) # This tuple must be unique when considered together
 
-        unique_together=('sender','resource',)
-    
-    def deny(self):
-        pass
-    def accept(self):
-        pass
-    
+
+# corresponds to the table in the database storing all information about an access request    
 class AccessRequest(Request):
-    
-    pass
-    
+    type = 'access'
+# corresponds to the table in the database storing all information about a deletion request    
 class DeletionRequest(Request):
-
-    pass 
+    type = 'deletion' 
     
